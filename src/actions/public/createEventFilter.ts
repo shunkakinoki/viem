@@ -14,6 +14,7 @@ import type {
 } from '../../types/index.js'
 import { encodeEventTopics, numberToHex } from '../../utils/index.js'
 import type { EncodeEventTopicsParameters } from '../../utils/index.js'
+import { createFilterRequestScope } from '../../utils/filters/createFilterRequestScope.js'
 
 export type CreateEventFilterParameters<
   TAbiEvent extends AbiEvent | undefined = undefined,
@@ -82,6 +83,10 @@ export async function createEventFilter<
     _Args
   > = {} as any,
 ): Promise<CreateEventFilterReturnType<TAbiEvent, _Abi, _EventName, _Args>> {
+  const getRequest = createFilterRequestScope(client, {
+    method: 'eth_newFilter',
+  })
+
   let topics: LogTopic[] = []
   if (event)
     topics = encodeEventTopics({
@@ -102,11 +107,13 @@ export async function createEventFilter<
       },
     ],
   })
+
   return {
     abi: event ? [event] : undefined,
     args,
     eventName: event ? (event as AbiEvent).name : undefined,
     id,
+    request: getRequest(id),
     type: 'event',
   } as unknown as CreateEventFilterReturnType<
     TAbiEvent,
